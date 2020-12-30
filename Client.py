@@ -4,6 +4,7 @@ import threading
 from curtsies import Input
 import time
 from time import sleep
+from scapy.arch import get_if_addr
 
 class Client:
     # GLOBALS
@@ -28,6 +29,7 @@ class Client:
         """
         while True:
             data, addr = self.udp_sock.recvfrom(1024) # buffer size is 1024 bytes
+
             
             print("recieved offer from {}, attempting to connect...".format(addr[0]))
 
@@ -112,7 +114,7 @@ class Client:
                 while e is not None:
                     if self.game_over:
                         break
-                    print(repr(e))
+                    
                     self.send_tcp_message(str(e))
                     curr = future - time.time()
                     e = input_generator.send(curr)
@@ -126,6 +128,8 @@ class Client:
         try:
 
             while True:
+
+                sleep(1)
                 try:
                     # looking for a Server
                     server_data, server_addres = client.listening_for_requests()
@@ -157,6 +161,10 @@ class Client:
                 except ConnectionRefusedError as c:
                     print('Server disconnected')
 
+                except Exception as e:
+                    print('general_exception')
+                    continue
+
             
             
         except KeyboardInterrupt as e:
@@ -171,7 +179,7 @@ class Client:
         
 
 if __name__ == "__main__":
-    client = Client('Shirbit')
+    client = Client('Team Shirbit')
     client.main()
    
 

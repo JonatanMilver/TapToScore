@@ -3,18 +3,16 @@ import threading
 import random
 import struct
 from time import sleep
+from scapy.arch import get_if_addr
 
 class Server:
-    # IP = socket.gethostbyname(socket.gethostname())
     IP = '172.18.0.61'
+    # IP = get_if_addr('eth1')
     UDP_PORT = 13117
     TCP_PORT = 50000
 
-    # magic_cookie = b'11111110111011011011111011101111'
     magic_cookie = 0xfeedbeef
-    # m_type = b'00000010'
     m_type = 0x2
-    # server_port = b'1100001101010000'
     server_port = 50000
     udp_offer = magic_cookie + m_type + server_port
 
@@ -29,6 +27,7 @@ class Server:
 
         # setting up udp socket for broadcasting to all clients
         self.udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        
 
         
         self.tcp_sock = socket.socket(socket.AF_INET, # Internet
@@ -44,11 +43,9 @@ class Server:
         sends a message every second for 10 seconds.
         """
         self.sending_udp_messages = True
-        print("Server started, listening on ip address {}".format(self.IP))
 
         for i in range(10):
-            print(i)
-            # self.udp_sock.sendto(self.udp_offer, ('<broadcast>', self.UDP_PORT))
+            print('sending message number {}...'.format(i))
             self.udp_sock.sendto(struct.pack('IbH', self.magic_cookie, self.m_type, self.server_port), ('<broadcast>', self.UDP_PORT))
             sleep(1)
 
@@ -79,7 +76,6 @@ class Server:
         """
         # TODO: put in try and catch!
         team_name = client_socket.recv(1024).decode('utf-8')
-        # print(team_name)
 
         self.client_list.append((client_socket, client_address, team_name))
 
@@ -106,6 +102,12 @@ class Server:
         """
         creates a start game message
         """
+        OKBLUE = '\033[94m'
+        OKCYAN = '\033[96m'
+        OKGREEN = '\033[92m'
+        WARNING = '\033[93m'
+        FAIL = '\033[91m'
+        ENDC = '\033[0m'
         m = 'Welcome to Keyboard Spamming Battle Royale.\n'
         m += 'Group 1:\n==\n'
         for c in group_a:
@@ -166,7 +168,6 @@ class Server:
         """
         while self.receive_m:
             m = sock.recv(1024)
-            # print(len(m.decode('utf-8')))
             counter[sock] += 1
 
     def create_game_end_message(self, group_a, counter_a, group_b, counter_b):
@@ -201,10 +202,17 @@ class Server:
         """
         main game loop
         """
+
+        print("Server started, listening on ip address {}".format(self.IP))
+
         server.tcp_sock.listen()
         try:
 
             while True:
+                
+                print('waiting 5')
+                sleep(5)
+
                 udp_message_thread = threading.Thread(target=server.send_udp_message)
                 udp_message_thread.setDaemon(True)
                 udp_message_thread.start()
@@ -218,15 +226,9 @@ class Server:
 
                 if len(server.client_list) < 1:
                     print("no players!")
-                #     server.release_clients()
                     continue
 
                 group_a, group_b = server.assign_to_groups()
-
-                print("group_a: {}".format(group_a))
-                print("group_b: {}".format(group_b))
-
-
 
                 # Game mode
 
@@ -239,7 +241,6 @@ class Server:
                 for s in group_b:
                     counter_group_b[s[0]] = 0
 
-                # server.get_tcp_messages(counter_group_a, counter_group_b)
                 x = threading.Thread(target=server.get_tcp_messages, args=(counter_group_a, counter_group_b))
                 x.start()
 
@@ -248,18 +249,12 @@ class Server:
 
                 x.join()
 
-                print()
-                print(counter_group_a)
-                print()
-                print(counter_group_b)
-                print()
-                # print("Game Over!")
-
-
-                print(server.create_game_end_message(group_a, counter_group_a, group_b, counter_group_b))
-                # server.send_tcp_message("Game over!")
+                server.send_tcp_message(server.create_game_end_message(group_a, counter_group_a, group_b, counter_group_b))
 
                 server.release_clients()
+
+                print("Game Over, sending out offer requests...")
+
         except KeyboardInterrupt as e:
             print("Server Done!")
 
@@ -272,73 +267,3 @@ class Server:
 if __name__ == "__main__":
     server = Server()
     server.main()
-    # server.tcp_sock.listen()
-    # try:
-
-    #     while True:
-    #         udp_message_thread = threading.Thread(target=server.send_udp_message)
-    #         udp_message_thread.setDaemon(True)
-    #         udp_message_thread.start()
-            
-    #         tcp_receive_thread = threading.Thread(target=server.accept_connections)
-    #         tcp_receive_thread.setDaemon(True)
-    #         tcp_receive_thread.start()
-
-    #         udp_message_thread.join()
-    #         tcp_receive_thread.join()
-
-    #         if len(server.client_list) < 2:
-    #             print("not enough players!")
-    #             server.release_clients()
-    #             continue
-
-    #         group_a, group_b = server.assign_to_groups()
-
-    #         print("group_a: {}".format(group_a))
-    #         print("group_b: {}".format(group_b))
-
-
-
-    #         # Game mode
-
-    #         counter_group_a = {}
-    #         counter_group_b = {}
-
-    #         for s in group_a:
-    #             counter_group_a[s[0]] = 0
-            
-    #         for s in group_b:
-    #             counter_group_b[s[0]] = 0
-
-    #         # server.get_tcp_messages(counter_group_a, counter_group_b)
-    #         x = threading.Thread(target=server.get_tcp_messages, args=(counter_group_a, counter_group_b))
-    #         x.start()
-
-    #         game_start_message = server.create_game_start_message(group_a, group_b)
-    #         server.send_tcp_message(game_start_message)
-
-    #         x.join()
-
-    #         print()
-    #         print(counter_group_a)
-    #         print()
-    #         print(counter_group_b)
-    #         print()
-    #         # print("Game Over!")
-
-
-    #         print(server.create_game_end_message(group_a, counter_group_a, group_b, counter_group_b))
-    #         # server.send_tcp_message("Game over!")
-
-    #         server.release_clients()
-    # except KeyboardInterrupt as e:
-    #     print("Server Done!")
-
-
-
-    # server.tcp_sock.shutdown(socket.SHUT_RDWR)
-    # server.tcp_sock.close()
-
-    # server.start_game()
-
-    # server.send_udp_message()
