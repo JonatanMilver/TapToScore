@@ -6,8 +6,8 @@ from time import sleep
 from scapy.arch import get_if_addr
 
 class Server:
-    IP = '172.18.0.61'
-    # IP = get_if_addr('eth1')
+    # IP = '172.18.0.61'
+    IP = get_if_addr('eth1')
     UDP_PORT = 13117
     TCP_PORT = 50000
 
@@ -46,7 +46,7 @@ class Server:
 
         for i in range(10):
             print('sending message number {}...'.format(i))
-            self.udp_sock.sendto(struct.pack('IbH', self.magic_cookie, self.m_type, self.server_port), ('<broadcast>', self.UDP_PORT))
+            self.udp_sock.sendto(struct.pack('IbH', self.magic_cookie, self.m_type, self.server_port), ('172.1.255.255', self.UDP_PORT))
             sleep(1)
 
         self.sending_udp_messages = False
@@ -225,7 +225,7 @@ class Server:
                 tcp_receive_thread.join()
 
                 if len(server.client_list) < 1:
-                    print("no players!")
+                    print("No players!")
                     continue
 
                 group_a, group_b = server.assign_to_groups()
