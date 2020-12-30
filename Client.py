@@ -7,10 +7,20 @@ from time import sleep
 from scapy.arch import get_if_addr
 
 class Client:
-    # GLOBALS
+    # GLOBALS - CONSTANTS
     UDP_PORT = 13117
     MAGIC_COOKIE = 0xfeedbeef
     M_TYPE = 0x2
+    # COLORS
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
     def __init__(self, team_name):
         self.team_name = team_name
@@ -89,7 +99,6 @@ class Client:
                 raise e
             
             except:
-                # raise Exception("receive fell")
                 raise ConnectionRefusedError("Server is down.")
             
     
@@ -123,6 +132,9 @@ class Client:
             raise KeyboardInterrupt("Interaption.")
 
     def main(self):
+        """
+        Client main function, runs from the beginning of the Client.
+        """
         print("Client started, listening for offer requests...")
 
         try:

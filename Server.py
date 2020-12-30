@@ -6,15 +6,15 @@ from time import sleep
 from scapy.arch import get_if_addr
 
 class Server:
-    # IP = '172.18.0.61'
+    #GLOBALS - CONSTANTS
     IP = get_if_addr('eth1')
     UDP_PORT = 13117
     TCP_PORT = 50000
 
-    magic_cookie = 0xfeedbeef
-    m_type = 0x2
-    server_port = 50000
-    udp_offer = magic_cookie + m_type + server_port
+    MAGIC_COOKIE = 0xfeedbeef
+    M_TYPE = 0x2
+    SERVER_PORT = 50000
+    udp_offer = MAGIC_COOKIE + M_TYPE + SERVER_PORT
 
     def __init__(self):
         self.sending_udp_messages = False
@@ -27,9 +27,7 @@ class Server:
 
         # setting up udp socket for broadcasting to all clients
         self.udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        
-
-        
+        # initializing TCP socket
         self.tcp_sock = socket.socket(socket.AF_INET, # Internet
                       socket.SOCK_STREAM) # TCP
         self.tcp_sock.settimeout(0.1)
@@ -46,7 +44,7 @@ class Server:
 
         for i in range(10):
             print('sending message number {}...'.format(i))
-            self.udp_sock.sendto(struct.pack('IbH', self.magic_cookie, self.m_type, self.server_port), ('172.1.255.255', self.UDP_PORT))
+            self.udp_sock.sendto(struct.pack('IbH', self.MAGIC_COOKIE, self.M_TYPE, self.SERVER_PORT), ('172.1.255.255', self.UDP_PORT))
             sleep(1)
 
         self.sending_udp_messages = False
@@ -64,7 +62,6 @@ class Server:
                 client_thread.start()
 
             except socket.timeout:
-                # print("socket timed out")
                 continue
 
 
@@ -74,9 +71,7 @@ class Server:
         @param client_socket: tuple of 5, the client's socket
         @param client_address: tuple of 2, the client's IP and port
         """
-        # TODO: put in try and catch!
         team_name = client_socket.recv(1024).decode('utf-8')
-
         self.client_list.append((client_socket, client_address, team_name))
 
     def assign_to_groups(self):
@@ -100,30 +95,23 @@ class Server:
 
     def create_game_start_message(self, group_a, group_b):
         """
-        creates a start game message
+        Creates a start game message
         """
-        OKBLUE = '\033[94m'
-        OKCYAN = '\033[96m'
-        OKGREEN = '\033[92m'
-        WARNING = '\033[93m'
-        FAIL = '\033[91m'
-        ENDC = '\033[0m'
-        m = 'Welcome to Keyboard Spamming Battle Royale.\n'
-        m += 'Group 1:\n==\n'
+        msg = 'Welcome to Keyboard Spamming Battle Royale.\n'
+        msg += 'Group 1:\n==\n'
         for c in group_a:
-            m += c[2]
+            msg += c[2]
         
-        m += 'Group 2:\n==\n'
+        msg += 'Group 2:\n==\n'
         for c in group_b:
-            m += c[2]
+            msg += c[2]
 
-        m += 'Start pressing keys on your keyboard as fast as you can!!'
-
-        return m
+        msg += 'Start pressing keys on your keyboard as fast as you can!!'
+        return msg
 
     def send_tcp_message(self, message):
         """
-        sends message to all clients over tcp
+        Sends message to all clients over tcp.
         @param message: String to send
         """
         for client in self.client_list:
@@ -131,12 +119,12 @@ class Server:
 
     def release_clients(self):
         """
-        closes connection to all clients in the end of a game
+        Closes connection to all clients in the end of a game.
         """
-        for c in self.client_list:
+        for client in self.client_list:
             try:
-                c[0].shutdown(socket.SHUT_RDWR)
-                c[0].close()
+                client[0].shutdown(socket.SHUT_RDWR)
+                client[0].close()
             except Exception as identifier:
                 continue
             
@@ -164,7 +152,7 @@ class Server:
         
     def get_message(self, sock, counter):
         """
-        recieve a message from a single client
+        Recieve a message from a single client
         """
         while self.receive_m:
             m = sock.recv(1024)
@@ -172,35 +160,35 @@ class Server:
 
     def create_game_end_message(self, group_a, counter_a, group_b, counter_b):
         """
-        creates an end game message
+        Creates an end game message
         """
         sum_a = sum(counter_a.values())
         sum_b = sum(counter_b.values())
         winner = -1
-
-        m = 'Game over!\nGroup 1 typed in {} characters. Group 2 typed in {} characters.\n'.format(sum_a, sum_b)
+        # Beginning of end-game message
+        msg = 'Game over!\nGroup 1 typed in {} characters. Group 2 typed in {} characters.\n'.format(sum_a, sum_b)
         if sum_a >= sum_b:
             winner = 1
-            m += 'Group 1 wins!\n\n'
+            msg += 'Group 1 wins!\n\n'
         else:
             winner = 2
-            m += 'Group 2 wins!\n\n'
+            msg += 'Group 2 wins!\n\n'
 
-        m += 'Congratulations to the winners:\n==\n'
+        msg += 'Congratulations to the winners:\n==\n'
 
         if winner == 1:
             for i in group_a:
-                m += i[2] + '\n'
+                msg += i[2] + '\n'
 
         else:
             for i in group_b:
-                m += i[2] + '\n'
+                msg += i[2] + '\n'
 
-        return m
+        return msg
 
     def main(self):
         """
-        main game loop
+        Main game loop, runs without stopping.
         """
 
         print("Server started, listening on ip address {}".format(self.IP))
@@ -210,7 +198,7 @@ class Server:
 
             while True:
                 
-                print('waiting 5')
+                print('Waiting 5 seconds')
                 sleep(5)
 
                 udp_message_thread = threading.Thread(target=server.send_udp_message)
