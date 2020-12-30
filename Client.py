@@ -33,7 +33,7 @@ class Client:
 
             try:
                                          # remove ! only for checks on out server!
-                if self.check_data(data) and (addr[0] == '172.18.0.61'):
+                if self.check_data(data):
                     return struct.unpack('IbH',data), addr
             except:
                 # Continue looking for connections if data is invalid.

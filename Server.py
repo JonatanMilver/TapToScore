@@ -216,9 +216,9 @@ class Server:
                 udp_message_thread.join()
                 tcp_receive_thread.join()
 
-                if len(server.client_list) < 2:
-                    print("not enough players!")
-                    server.release_clients()
+                if len(server.client_list) < 1:
+                    print("no players!")
+                #     server.release_clients()
                     continue
 
                 group_a, group_b = server.assign_to_groups()
