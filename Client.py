@@ -11,6 +11,7 @@ class Client:
     UDP_PORT = 13117
     MAGIC_COOKIE = 0xfeedbeef
     M_TYPE = 0x2
+    BUFFER_SIZE = 1024
     # COLORS
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -38,7 +39,7 @@ class Client:
         @return: decoded data - tuple of server data and server address.
         """
         while True:
-            data, addr = self.udp_sock.recvfrom(1024) # buffer size is 1024 bytes
+            data, addr = self.udp_sock.recvfrom(self.BUFFER_SIZE) # buffer size is 1024 bytes
             print("recieved offer from {}, attempting to connect...".format(addr[0]))
 
             try:
@@ -84,7 +85,7 @@ class Client:
         """
         while True:
             try:
-                message = self.tcp_sock.recv(1024).decode('utf-8')
+                message = self.tcp_sock.recv(self.BUFFER_SIZE).decode('utf-8')
                 if len(message) > 0:
                     print(f'{self.OKBLUE}{message}{self.ENDC}')
 
