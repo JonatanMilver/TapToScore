@@ -12,7 +12,7 @@ class Server:
     TCP_PORT = 50000
     HEADER = 1024 #MSG_HEADER
 
-    BROADCAST_IP = '172.1.255.255'
+    
 
     MAGIC_COOKIE = 0xfeedbeef
     M_TYPE = 0x2
@@ -20,6 +20,8 @@ class Server:
     udp_offer = MAGIC_COOKIE + M_TYPE + SERVER_PORT
 
     def __init__(self):
+        self.BROADCAST_IP = self.initialize_broadcast()
+
         self.sending_udp_messages = False # Tells the TCP conn when to stop accepting clients.
         self.receive_m = False
 
@@ -36,6 +38,15 @@ class Server:
         self.tcp_sock.settimeout(0.1)
         self.tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.tcp_sock.bind((self.IP, self.TCP_PORT))
+
+    def initialize_broadcast(self):
+        """
+        Initializing broadcast ip within the network.
+        @return: broadcast_addr - the ip address for broadcasting
+        """
+        ip_split = self.IP.split('.')
+        broadcast_addr = ip_split[0] + '.' + ip_split[1] + '.255.255'
+        return broadcast_addr
 
     
     def send_udp_message(self):
