@@ -85,11 +85,12 @@ class Client:
         while True:
             try:
                 message = self.tcp_sock.recv(1024).decode('utf-8')
-                print(message)
+                if len(message) > 0:
+                    print(f'{self.OKBLUE}{message}{self.ENDC}')
 
                 if message.startswith('Game over!') or len(message) == 0:
                     self.game_over = True
-                    print('Server disconnected, listening for offer requests...')
+                    print(f'{self.WARNING}Server disconnected, listening for offer requests...{self.ENDC}')
                     break
 
                 if message.startswith('Welcome'):
@@ -135,7 +136,7 @@ class Client:
         """
         Client main function, runs from the beginning of the Client.
         """
-        print("Client started, listening for offer requests...")
+        print(f"{self.OKGREEN}Client started, listening for offer requests...{self.ENDC}")
 
         try:
 

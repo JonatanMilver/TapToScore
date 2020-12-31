@@ -10,6 +10,9 @@ class Server:
     IP = get_if_addr('eth1')
     UDP_PORT = 13117
     TCP_PORT = 50000
+    HEADER = 1024 #MSG_HEADER
+
+    BROADCAST_IP = '172.1.255.255'
 
     MAGIC_COOKIE = 0xfeedbeef
     M_TYPE = 0x2
@@ -44,7 +47,7 @@ class Server:
 
         for i in range(10):
             print('sending message number {}...'.format(i))
-            self.udp_sock.sendto(struct.pack('IbH', self.MAGIC_COOKIE, self.M_TYPE, self.SERVER_PORT), ('172.1.255.255', self.UDP_PORT))
+            self.udp_sock.sendto(struct.pack('IbH', self.MAGIC_COOKIE, self.M_TYPE, self.SERVER_PORT), (self.BROADCAST_IP, self.UDP_PORT))
             sleep(1)
 
         self.sending_udp_messages = False
@@ -155,7 +158,7 @@ class Server:
         Recieve a message from a single client
         """
         while self.receive_m:
-            m = sock.recv(1024)
+            m = sock.recv(self.HEADER)
             counter[sock] += 1
 
     def create_game_end_message(self, group_a, counter_a, group_b, counter_b):
