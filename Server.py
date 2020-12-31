@@ -20,10 +20,10 @@ class Server:
     udp_offer = MAGIC_COOKIE + M_TYPE + SERVER_PORT
 
     def __init__(self):
-        self.sending_udp_messages = False
+        self.sending_udp_messages = False # Tells the TCP conn when to stop accepting clients.
         self.receive_m = False
 
-        self.client_list = []
+        self.client_list = [] #Connected clients via TCP will be appended.
 
         self.udp_sock = socket.socket(socket.AF_INET, # Internet
                       socket.SOCK_DGRAM) # UDP
@@ -43,7 +43,7 @@ class Server:
         Broadcast offer requests to all clients over a udp connection,
         sends a message every second for 10 seconds.
         """
-        self.sending_udp_messages = True
+        self.sending_udp_messages = True 
 
         for i in range(10):
             print('sending message number {}...'.format(i))
@@ -54,7 +54,7 @@ class Server:
 
     def accept_connections(self):
         """
-        accepts connection requests and client's team name
+        Accepts connection requests and client's team name
         from clients while still sending offer requests.
         """
         while self.sending_udp_messages:
@@ -70,7 +70,7 @@ class Server:
 
     def get_team_name(self, client_socket, client_address):
         """
-        recieves the client's team name and saves it with additional data to client_list
+        Recieves the client's team name and saves it with additional data to client_list.
         @param client_socket: tuple of 5, the client's socket
         @param client_address: tuple of 2, the client's IP and port
         """
@@ -79,7 +79,7 @@ class Server:
 
     def assign_to_groups(self):
         """
-        divides randomly all clients in client_list in to two groups.
+        Divides randomly all clients in client_list in to two groups.
         """
         group_a, group_b = [], []
         client_copy = list(self.client_list)
@@ -98,7 +98,9 @@ class Server:
 
     def create_game_start_message(self, group_a, group_b):
         """
-        Creates a start game message
+        Creates a start game message with the teams' names.
+        @param group_a: connected clients.
+        @param group_b: connected clients.
         """
         msg = 'Welcome to Keyboard Spamming Battle Royale.\n'
         msg += 'Group 1:\n==\n'
@@ -131,12 +133,12 @@ class Server:
             except Exception as identifier:
                 continue
             
-
+        # nullifies the list for next game.
         self.client_list = []
 
     def get_tcp_messages(self, counter_a, counter_b):
         """
-        opens a thread for each client so the server can recieve incoming messages from all clients simultansouly
+        Opens a thread for each client so the server can recieve incoming messages from all clients simultanously
         @param counter_a: a dict with keys as clients (3-tuple) from group_a and 0 for its values (number of recieved messages per client)
         @param counter_b: same as counter_a for group_b
         """
@@ -155,7 +157,9 @@ class Server:
         
     def get_message(self, sock, counter):
         """
-        Recieve a message from a single client
+        Recieves a message from a single client.
+        @param sock: Socket of the client.
+        @param counter: a dict with keys as clients (3-tuple) from group_a and count value for its values (number of recieved messages per client)
         """
         while self.receive_m:
             m = sock.recv(self.HEADER)
@@ -163,7 +167,11 @@ class Server:
 
     def create_game_end_message(self, group_a, counter_a, group_b, counter_b):
         """
-        Creates an end game message
+        Creates an end game message.
+        @param group_a: All clients from the first group.
+        @param counter_a: The dictionary that is holding the amount of keyboard presses for each of group_a's clients.
+        @param group_b: All clients from the second group.
+        @param counter_a: The dictionary that is holding the amount of keyboard presses for each of group_b's clients.
         """
         sum_a = sum(counter_a.values())
         sum_b = sum(counter_b.values())
@@ -200,14 +208,15 @@ class Server:
         try:
 
             while True:
-                
+                # A sleep so that loop wouldn't run forever.
                 print('Waiting 5 seconds')
                 sleep(5)
-
+                # Thread initiation to send udp message on broadcast.
                 udp_message_thread = threading.Thread(target=server.send_udp_message)
                 udp_message_thread.setDaemon(True)
                 udp_message_thread.start()
                 
+                # Thread initiation to receive tcp connections.
                 tcp_receive_thread = threading.Thread(target=server.accept_connections)
                 tcp_receive_thread.setDaemon(True)
                 tcp_receive_thread.start()
@@ -225,21 +234,22 @@ class Server:
 
                 counter_group_a = {}
                 counter_group_b = {}
-
                 for s in group_a:
                     counter_group_a[s[0]] = 0
                 
                 for s in group_b:
                     counter_group_b[s[0]] = 0
 
+                # Thread initiation to start listening for client's messages.
                 x = threading.Thread(target=server.get_tcp_messages, args=(counter_group_a, counter_group_b))
                 x.start()
 
                 game_start_message = server.create_game_start_message(group_a, group_b)
+                # Game start
                 server.send_tcp_message(game_start_message)
 
                 x.join()
-
+                # End of game
                 server.send_tcp_message(server.create_game_end_message(group_a, counter_group_a, group_b, counter_group_b))
 
                 server.release_clients()
